@@ -7,12 +7,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   html,body{margin:0;height:100%;background:#000;overflow:hidden}
-  body{display:flex;align-items:center;justify-content:center}
+  body{display:flex;align-items:center;justify-content:center;position:relative}
   canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+  #admin-ui{
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:6px;z-index:10;font-family:'Press Start 2P',monospace;
+  }
+  #admin-input{
+    background:#111;color:#ffd23f;border:2px solid #555;padding:6px 10px;
+    font-family:'Press Start 2P',monospace;font-size:10px;outline:none;text-transform:uppercase;
+  }
+  #admin-input:focus{border-color:#ffd23f}
+  #admin-btn{
+    background:#333;color:#fff;border:2px solid #555;padding:6px 10px;
+    font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;
+  }
+  #admin-btn:hover{background:#555}
 </style>
 </head>
 <body>
 <canvas id="screen"></canvas>
+<div id="admin-ui">
+  <input type="text" id="admin-input" placeholder="КОД..." maxlength="10" autocomplete="off">
+  <button id="admin-btn">OK</button>
+</div>
+
 <script>
 'use strict';
 // ============================================================
@@ -49,14 +68,46 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function hr(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
-// ---------------- ВВОД ----------------
+// ---------------- ВВОД И АДМИНКА ----------------
+const adminInput = document.getElementById('admin-input');
+const adminBtn = document.getElementById('admin-btn');
+const adminUI = document.getElementById('admin-ui');
+
+let adminMenuSel = 0;
+
+function checkAdminCode() {
+  if (adminInput.value.trim().toUpperCase() === 'ADMIN') {
+    state = 'admin_select';
+    adminMenuSel = 0;
+    adminUI.style.display = 'none';
+    adminInput.value = '';
+    adminInput.blur();
+    SND.init();
+    SND.sfx('big');
+  } else {
+    adminInput.value = '';
+    adminInput.placeholder = 'НЕВЕРНО!';
+    setTimeout(() => { adminInput.placeholder = 'КОД...'; }, 1200);
+  }
+}
+
+adminBtn.addEventListener('click', checkAdminCode);
+adminInput.addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Enter') checkAdminCode();
+});
+
 const keys = {}, pressed = {};
 addEventListener('keydown', e => {
-  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+  if (document.activeElement === adminInput) return;
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'Enter'].includes(e.code)) e.preventDefault();
   if (!keys[e.code]) pressed[e.code] = true;
   keys[e.code] = true; SND.init();
 });
-addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('keyup', e => {
+  if (document.activeElement === adminInput) return;
+  keys[e.code] = false;
+});
 const jumpKey = () => keys.Space || keys.ArrowUp;
 const jumpPressed = () => pressed.Space || pressed.ArrowUp;
 const okPressed = () => pressed.Space || pressed.Enter;
@@ -78,6 +129,9 @@ const TRACKS = {
     lead: [69,0,72,76,0,72,69,0, 71,0,74,77,0,74,71,0, 72,0,76,79,0,76,72,74, 76,0,74,0,72,0,71,0,
            69,0,72,76,0,72,69,0, 67,0,71,74,0,71,67,0, 65,0,69,72,77,76,74,72, 71,0,68,0,69,0,0,0],
     bass: [45,0,57,0,45,0,57,0, 43,0,55,0,43,0,55,0, 41,0,53,0,41,0,53,0, 40,0,52,0,40,0,52,0] },
+  turbo: { bpm: 175, hat: true,
+    lead: [64,67,71,67,64,67,71,74, 76,74,71,67,64,67,69,71, 62,65,69,65,62,65,69,72, 74,72,69,65,62,65,67,69],
+    bass: [40,40,40,40,40,40,40,40, 40,40,40,40,40,40,40,40, 38,38,38,38,38,38,38,38, 38,38,38,38,38,38,38,38] },
   boss: { bpm: 170, hat: true,
     lead: [64,0,64,67,0,64,70,69, 64,0,64,67,0,64,71,70, 64,0,64,67,0,64,74,72, 71,70,69,67,66,0,63,0],
     bass: [40,40,52,40,40,52,40,40, 40,40,52,40,40,52,43,42, 40,40,52,40,40,52,40,40, 47,47,46,46,45,45,44,44] },
@@ -136,6 +190,7 @@ const SND = {
       case 'die': seq([440, 330, 247, 165, 110], 0.13, 0.1); break;
       case 'check': seq([660, 880], 0.08); break;
       case 'blip': this.tone(880, 0.05, 'square', 0.05); break;
+      case 'engine': this.tone(110 + Math.random() * 30, 0.04, 'sawtooth', 0.03); break;
     }
   },
   play(name) {
@@ -189,6 +244,15 @@ const PAL_W = { k:'#1a2a5a', s:'#e8b894', g:'#2e3e70', R:'#ffd23f', c:'#222', d:
 W_TOP[3] = "...skssks...".replace(/k/g, 'z'); PAL_W.z = '#111';
 SPR.w1 = mkSpr(W_TOP.concat(["..dd....dd..","..dd....dd..",".zzz...zzz.."]), PAL_W);
 SPR.w2 = mkSpr(W_TOP.concat(["...dd..dd...","...dd..dd...","..zzz.zzz..."]), PAL_W);
+
+function drawChekRider(ctx, x, y, tilt = 0) {
+  ctx.save(); ctx.translate(x + 12, y + 10); ctx.rotate(tilt); ctx.translate(-12, -10);
+  ctx.save(); ctx.translate(14, -6); drawSprScaled(ctx, SPR.pj, 0, 0, 1.1, false); ctx.restore();
+  ctx.save(); ctx.translate(0, 8); ctx.rotate(-Math.PI / 2); drawSprScaled(ctx, SPR.chek, -8, 0, 2.2, false); ctx.restore();
+  ctx.fillStyle = '#ff9900'; ctx.fillRect(-6, 8, 6, 4);
+  ctx.fillStyle = '#ffff66'; ctx.fillRect(-3, 9, 3, 2);
+  ctx.restore();
+}
 
 function drawTumba(ctx, x, y) {
   const R = (c, a, b, w, h) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); };
@@ -261,96 +325,9 @@ function drawBossAt(ctx, x, y, dir, t, st) {
     if (LET_P[r][c]) ctx.fillRect(bx + 4 + c, by + r, 1, 1);
   }
 }
-function drawChikushka(ctx, x, y, tilt) {
-  ctx.save();
-  ctx.translate(x + 13, y + 10);
-  ctx.rotate(tilt);
-  ctx.translate(-13, -10);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(2, 18, 26, 4);
-  ctx.fillStyle = '#2e8a3e';
-  ctx.fillRect(0, 4, 18, 12);
-  ctx.fillRect(14, 6, 8, 8);
-  ctx.fillStyle = '#d8202a';
-  ctx.fillRect(20, 7, 4, 6);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(3, 6, 9, 8);
-  ctx.fillStyle = '#d8202a';
-  ctx.fillRect(4, 7, 7, 2);
-  ctx.fillStyle = '#111';
-  ctx.fillRect(4, 10, 7, 1);
-  ctx.fillStyle = '#7fd83a';
-  ctx.fillRect(2, 5, 2, 10);
-  ctx.fillRect(15, 7, 1, 6);
-  ctx.fillStyle = '#fff';
-  ctx.globalAlpha = 0.6;
-  ctx.fillRect(-8, 8, 6, 1);
-  ctx.fillRect(-12, 12, 10, 1);
-  ctx.fillRect(-6, 14, 4, 1);
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-function drawTurboWall(ctx, x, gap_y, gap_h, track) {
-  const colors = ['#4a525c', '#5a626c', '#6a727c', '#7a3030', '#9a2020'];
-  const col = colors[(track - 1) % colors.length];
-  const col_dark = '#2a2a2a';
-  ctx.fillStyle = col;
-  ctx.fillRect(x, 0, 32, gap_y);
-  ctx.fillStyle = col_dark;
-  ctx.fillRect(x, gap_y - 4, 32, 4);
-  ctx.fillStyle = '#888';
-  for (let y = 10; y < gap_y - 10; y += 20) {
-    ctx.fillRect(x + 4, y, 24, 4);
-  }
-  ctx.fillStyle = col;
-  ctx.fillRect(x, gap_y + gap_h, 32, H - (gap_y + gap_h));
-  ctx.fillStyle = col_dark;
-  ctx.fillRect(x, gap_y + gap_h, 32, 4);
-  for (let y = gap_y + gap_h + 10; y < H - 10; y += 20) {
-    ctx.fillRect(x + 4, y, 24, 4);
-  }
-  ctx.fillStyle = '#ffd23f';
-  ctx.fillRect(x, gap_y - 2, 32, 2);
-  ctx.fillRect(x, gap_y + gap_h, 32, 2);
-}
-function drawTurboBP(ctx, x, y, t) {
-  const bob = Math.sin(t * 0.1) * 5;
-  ctx.save();
-  ctx.translate(x, y + bob);
-  ctx.fillStyle = '#eab892';
-  ctx.fillRect(10, 10, 60, 60);
-  ctx.fillStyle = '#2a2220';
-  ctx.fillRect(5, 5, 70, 15);
-  ctx.fillRect(5, 5, 15, 30);
-  ctx.fillRect(60, 5, 15, 30);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(20, 25, 15, 10);
-  ctx.fillRect(45, 25, 15, 10);
-  ctx.fillStyle = '#ff0000';
-  ctx.fillRect(25, 28, 8, 6);
-  ctx.fillRect(50, 28, 8, 6);
-  ctx.fillStyle = '#111';
-  ctx.fillRect(18, 20, 18, 4);
-  ctx.fillRect(44, 20, 18, 4);
-  ctx.fillStyle = '#d49c78';
-  ctx.fillRect(35, 35, 10, 15);
-  ctx.fillStyle = '#2a0a0a';
-  ctx.fillRect(25, 55, 30, 15);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(28, 55, 6, 5);
-  ctx.fillRect(46, 55, 6, 5);
-  ctx.fillStyle = '#7fd83a';
-  ctx.fillRect(38, 50, 4, 10 + Math.sin(t * 0.2) * 3);
-  ctx.fillStyle = '#1a1a1e';
-  ctx.fillRect(15, 70, 50, 20);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(25, 75, 10, 10);
-  ctx.fillRect(40, 75, 10, 10);
-  ctx.restore();
-}
 const PORT = { il: SPR.ps, bp: (() => { const c = document.createElement('canvas'); c.width = 22; c.height = 33; const x = c.getContext('2d'); drawBossAt(x, 0, 3, 1, 0, 'idle'); return c; })() };
 
-// ---------------- ТЕМЫ (ПАРК) ----------------
+// ---------------- ТЕМЫ ----------------
 const THEMES = {
   day:    { sky:['#4aa8ee','#c4eaff'], sun:'#fff3a0', clouds:'#ffffff', hill:['#8ccc70','#6ab458'], tree:['#2e8a3e','#44aa50','#1e6a2e'], trunk:'#6a4428', fence:'#3a3a3a',
             grass:['#4cc048','#9af07a','#2e8a2e'], dirt:['#9a6a38','#6a4420','#c08a50'], br:['#c0602e','#5a2410','#f0985a'], pl:['#b07a3e','#5a3818','#e0a868'] },
@@ -513,6 +490,7 @@ function Bld(w) {
   };
   return o;
 }
+
 const LEVELS = [
   { name: 'ЦЕНТРАЛЬНАЯ АЛЛЕЯ', sub: 'Собирай чекушки и тумбочки!', theme: 'day', music: 'level', w: 130, build(L) {
     L.gr(0, 24); L.s(2, 11, 'P');
@@ -604,9 +582,7 @@ const LEVELS = [
     L.s(139, 11, 'c'); L.r(140, 141, 11, 'L'); L.it([140, 141], 10, 'c');
     L.s(145, 11, 'E');
   } },
-  { name: 'ТУРБО-ТОННЕЛЬ', sub: 'Чикушка-экспресс! 5 трасс до БП!', theme: 'night', music: 'level3', w: 200, turbo: true, build(L) {
-    L.s(2, 11, 'P');
-  } },
+  { name: 'ТУРБОТОННЕЛЬ', sub: 'ГОНКА НА ЧЕКУШКЕ!', theme: 'night', music: 'turbo', isTurbo: true, build() {} },
   { name: 'ФОНТАН БП', sub: 'Финальная планёрка', theme: 'boss', music: 'boss', w: 24, boss: true, build(L) {
     L.f(0, 0, 0, 13, '='); L.f(23, 0, 23, 13, '='); L.gr(1, 22);
     L.r(4, 7, 8, '-'); L.r(16, 19, 8, '-'); L.s(12, 8, 'G');
@@ -618,9 +594,9 @@ const LEVELS = [
 // ---------------- СЮЖЕТ ----------------
 const STORY = [
   { pic: 'ildar', text: 'Городской парк. Суббота, 7:59.\nТехнолог Ильдар вышел на объект: нужно собрать норму квадратных метров.' },
-  { pic: 'items', text: 'За каждую ЧЕКУШКУ с неба падает 1 м², за каждую ТУМБОЧКУ — целых 5 м².\nЧекушка ДЖИНА из ящика «?» — и Ильдар вырастает!' },
-  { pic: 'bp', text: 'Но у фонтана в конце парка его ждёт Денис Кильпиков по кличке «БП».\nОн хочет забрать все метры себе. И у него страшный насморк...' },
-  { pic: 'keys', text: '← → бег, ПРОБЕЛ прыжок, F бросить табуретку.\nПрыгай охранникам на голову, бей ящики «?» снизу. Большой Ильдар ломает кирпичи!' },
+  { pic: 'items', text: 'За каждую ЧЕКУШКУ падает 1 м², за каждую ТУМБОЧКУ — 5 м².\nЧекушка ДЖИНА из ящика «?» — и Ильдар вырастает!' },
+  { pic: 'bp', text: 'Но впереди — опасный ТУРБОТОННЕЛЬ на чекушке и Денис «БП» Кильпиков!\nОн ждёт у фонтана, а его фразочки разрывают уши...' },
+  { pic: 'keys', text: '← → бег/манёвры, ПРОБЕЛ прыжок, F бросить табуретку.\nВ турботоннеле лети вперёд, прыгай трамплины и тарань БП в 5-й трассе!' },
 ];
 const BOSS_INTRO = [
   { who: 'БП', t: 'Так-так... Ильдар! Сколько у тебя там? {S} м²? Неплохо.' },
@@ -634,34 +610,26 @@ const BOSS_END = [
   { who: 'БП', t: '{S} м²... Ильдар, ты лучший технолог в коллективе.' },
   { who: 'ИЛЬДАР', t: 'Вот и договорились, БП. И платочек возьми.' },
 ];
+
 const BP_TAUNT = [
-  'Хрр... ТЬФУ!',
-  'Апчхи!',
-  'Лови сопельку!',
-  'Квадраты — на баланс!',
-  'Акт не подпишу!',
-  'Где отчёт, Ильдар?!',
   'нехуй тут улыбаться и пиздеть',
   'игроки хуевы',
   'у меня не настроено',
   'вас режут долбоебы',
   'ты, лысый, и ты, татарин глупый',
-  'я БП, а ты лох',
-  'чё лыбишься, урод?',
-  'табуретку свою засунь себе...',
-  'квадраты мои, Ильдар!',
-  'сейчас получишь соплями!'
+  'Хрр... ТЬФУ!',
+  'Апчхи!',
+  'Лови сопельку!',
+  'Квадраты — на баланс!',
+  'Акт не подпишу!',
+  'Где отчёт, Ильдар?!'
 ];
 const BP_OUCH = [
   'Ай! Не по регламенту!',
   'Премию срежу!',
   'Ой-ой!',
   'Табуреткой?! Серьёзно?!',
-  'вас режут долбоебы',
-  'игроки хуевы, но бьют больно',
-  'у меня не настроено, но болит',
-  'ты чё, обалдел?!',
-  'за это премию лишусь!'
+  'у меня не настроено!'
 ];
 
 // ---------------- СОСТОЯНИЕ ----------------
@@ -672,12 +640,40 @@ let stats = { chek: 0, tumba: 0, frames: 0 };
 let P = null, spawn = { x: 0, y: 0 }, flag = null;
 let ents = [], squares = [], pops = [], parts = [], shots = [], stools = [], deco = [];
 let boss = null, dlg = null, storyI = 0, storyCh = 0;
+let turbo = null;
 
 function newPlayer(x, y) { return { x, y, py: y, w: 10, h: 15, vx: 0, vy: 0, dir: 1, onGround: false, coyote: 0, jbuf: 0, hp: 3, inv: 0, anim: 0, dead: false, big: false, grow: 0, cool: 0 }; }
 function mkBoss(x, y) { return { x, y, sxp: x, syp: y, w: 20, h: 28, vx: 0, vy: 0, dir: -1, hp: 12, maxhp: 12, st: 'idle', t: 0, inv: 0, active: false, say: '', sayT: 0, onGround: false }; }
 
+function initTurboTrack() {
+  turbo = {
+    subTrack: 1, dist: 0, speed: 4.5,
+    pY: 140, pVy: 0, onGround: true,
+    obs: [], bpX: -1, crashed: false, flash: 0, hitBoss: false
+  };
+  spawnTurboObstacles();
+}
+
+function spawnTurboObstacles() {
+  turbo.obs = [];
+  const add = (d, type, y = 142) => turbo.obs.push({ d, type, y, passed: false });
+  add(300, 'block'); add(550, 'block'); add(800, 'ramp'); add(1100, 'block');
+  add(1550, 'block'); add(1750, 'high'); add(1950, 'ramp'); add(2250, 'block'); add(2450, 'block');
+  add(2850, 'ramp'); add(3100, 'block'); add(3300, 'block'); add(3550, 'high'); add(3800, 'ramp');
+  add(4200, 'block'); add(4380, 'high'); add(4600, 'ramp'); add(4850, 'block'); add(5100, 'block'); add(5350, 'high');
+  add(5750, 'ramp'); add(5950, 'block'); add(6200, 'high'); add(6450, 'ramp');
+}
+
 function loadLevel(i) {
-  const def = LEVELS[i], b = Bld(def.w); def.build(b);
+  const def = LEVELS[i];
+  if (def.isTurbo) {
+    lvl = { def, th: THEMES.night, w: 100, grid: [] };
+    initTurboTrack();
+    P = newPlayer(60, 140);
+    state = 'play';
+    return;
+  }
+  const b = Bld(def.w); def.build(b);
   lvl = { def, th: THEMES[def.theme], w: def.w, grid: b.g };
   ents = []; squares = []; shots = []; stools = []; parts = []; pops = []; boss = null; dlg = null; flag = null;
   let px = 32, py = 160;
@@ -695,54 +691,7 @@ function loadLevel(i) {
       case 'B': boss = mkBoss(bx - 2, by - 28); break;
     }
   }
-  
-  if (def.turbo) {
-    let x = 200;
-    let track = 1;
-    let gap_h = 90;
-    let interval = 140;
-    
-    while (x < 2800) {
-      if (x > 500 && track === 1) { track = 2; gap_h = 75; interval = 110; }
-      if (x > 1000 && track === 2) { track = 3; gap_h = 60; interval = 90; }
-      if (x > 1600 && track === 3) { track = 4; gap_h = 50; interval = 75; }
-      if (x > 2200 && track === 4) { track = 5; gap_h = 45; interval = 60; }
-      
-      const gap_y = 30 + Math.random() * (H - 60 - gap_h);
-      ents.push({
-        type: 'turbo_wall',
-        x: x,
-        gap_y: gap_y,
-        gap_h: gap_h,
-        track: track,
-        w: 32,
-        h: H
-      });
-      x += interval;
-    }
-    ents.push({
-      type: 'turbo_bp',
-      x: 3000,
-      y: H / 2 - 40,
-      w: 80,
-      h: 80,
-      t: 0
-    });
-    
-    P = newPlayer(px, py);
-    P.w = 26;
-    P.h = 20;
-    P.y = H / 2 - 10;
-    P.vy = 0;
-    P.x = 60;
-    spawn = { x: 60, y: H / 2 - 10 };
-    cam = 0;
-  } else {
-    P = newPlayer(px, py);
-    spawn = { x: px, y: py };
-  }
-  
-  levelStartScore = score;
+  P = newPlayer(px, py); spawn = { x: px, y: py }; cam = 0; levelStartScore = score;
 }
 function startLevel(i) { levelIdx = i; loadLevel(i); state = 'intro'; stT = 0; SND.play(null); }
 function newGame() { score = 0; lives = 3; stats = { chek: 0, tumba: 0, frames: 0 }; startLevel(0); }
@@ -799,44 +748,13 @@ function hurt() {
 }
 function killPlayer() { if (P.dead) return; P.dead = true; P.vy = -6; P.vx = 0; state = 'dying'; stT = 0; SND.play(null); SND.sfx('die'); }
 function respawn() {
-  if (lvl && lvl.def.turbo) {
-    loadLevel(levelIdx);
-    state = 'play';
-    stT = 0;
-    SND.play(lvl.def.music);
-    return;
-  }
+  if (lvl.def.isTurbo) { initTurboTrack(); state = 'play'; return; }
   P = newPlayer(spawn.x, spawn.y); P.inv = 60; shots = []; stools = [];
   if (boss) { const b = mkBoss(boss.sxp, boss.syp); b.active = true; b.st = 'walk'; boss = b; lvl.grid[8][12] = 'G'; }
   cam = clamp(P.x - W / 2, 0, lvl.w * T - W);
   state = 'play'; stT = 0; SND.play(lvl.def.music);
 }
 function updPlayer() {
-  if (lvl && lvl.def.turbo) {
-    P.x = cam + 60;
-    let accel = 0.6;
-    if (keys.ArrowUp) P.vy -= accel;
-    if (keys.ArrowDown) P.vy += accel;
-    P.vy *= 0.92;
-    P.y += P.vy;
-    if (P.y < 10) { P.y = 10; P.vy = 0; }
-    if (P.y > H - P.h - 10) { P.y = H - P.h - 10; P.vy = 0; }
-    P.dir = 1;
-    P.anim += 2;
-    
-    let speed = 2.5;
-    if (cam > 500) speed = 3.5;
-    if (cam > 1000) speed = 4.5;
-    if (cam > 1600) speed = 5.5;
-    if (cam > 2200) speed = 7.0;
-    
-    cam += speed;
-    cam = Math.min(cam, lvl.w * T - W);
-    
-    if (P.inv > 0) P.inv--;
-    return;
-  }
-
   let ax = 0; if (keys.ArrowLeft) ax -= 1; if (keys.ArrowRight) ax += 1;
   if (ax) { P.vx += ax * (P.onGround ? 0.3 : 0.2); P.dir = ax; }
   else { P.vx *= P.onGround ? 0.72 : 0.95; if (Math.abs(P.vx) < 0.05) P.vx = 0; }
@@ -892,24 +810,15 @@ function enemyContact(e) {
 // ---------------- БОСС ----------------
 function bossSay(list) {
   boss.say = list[Math.random() * list.length | 0];
-  boss.sayT = 360;
+  boss.sayT = 240;
 }
 function damageBoss() {
   const b = boss, toP = Math.sign(P.x - b.x) || 1;
   b.hp--; b.inv = 45; b.t = 0; shake = 6; SND.sfx('boss'); rainSquares(2);
   burst(b.x + b.w / 2, b.y + 6, ['#ffd23f', '#fff', '#7fd83a'], 12);
   b.vx = -toP * 2;
-  if (b.hp <= 0) {
-    b.st = 'dead';
-    b.say = 'игроки хуевы... у меня не настроено... вас режут долбоебы...';
-    b.sayT = 360;
-    rainSquares(10); SND.play(null); SND.sfx('win'); shots = [];
-  }
-  else if (b.hp === b.maxhp / 2) {
-    b.st = 'hurt';
-    b.say = 'нехуй тут улыбаться и пиздеть! Теперь серьёзно!';
-    b.sayT = 360;
-  }
+  if (b.hp <= 0) { b.st = 'dead'; b.say = 'Всё, хватит! Апчхи!'; b.sayT = 200; rainSquares(10); SND.play(null); SND.sfx('win'); shots = []; }
+  else if (b.hp === b.maxhp / 2) { b.st = 'hurt'; b.say = 'у меня не настроено!'; b.sayT = 220; }
   else { b.st = 'hurt'; bossSay(BP_OUCH); }
 }
 function updBoss() {
@@ -920,16 +829,11 @@ function updBoss() {
   switch (b.st) {
     case 'walk':
       b.dir = toP; b.vx = b.dir * (phase2 ? 1.1 : 0.7);
-      if (!b._tauntTimer) b._tauntTimer = 180 + Math.random() * 120 | 0;
-      if (--b._tauntTimer <= 0 && b.sayT === 0) {
-        bossSay(BP_TAUNT);
-        b._tauntTimer = 240 + Math.random() * 180 | 0;
-      }
       if (b.t > (phase2 ? 70 : 100)) {
         const r = Math.random(); b.t = 0;
         b.st = phase2 ? (r < 0.35 ? 'charge' : r < 0.7 ? 'throw' : 'jump') : (r < 0.55 ? 'throw' : 'jump');
         if (b.st === 'jump') { b.vy = -7.5; b.vx = toP * Math.min(2.2, dist / 50); }
-        if (b.st === 'throw' && Math.random() < 0.6) bossSay(BP_TAUNT);
+        if (b.st === 'throw' && Math.random() < 0.8) bossSay(BP_TAUNT);
         if (b.st === 'charge') { b.say = 'БП ИДЁТ!'; b.sayT = 180; }
       }
       break;
@@ -986,6 +890,114 @@ function updDlg() {
     if (dlg.ch < L.t.length) dlg.ch = L.t.length;
     else { dlg.i++; dlg.ch = 0; SND.sfx('blip'); if (dlg.i >= dlg.lines.length) { const f = dlg.onEnd; dlg = null; f && f(); } }
   }
+}
+
+// ---------------- ТУРБОТОННЕЛЬ ----------------
+function updTurbo() {
+  if (pressed.Escape || pressed.KeyP) { pauseFrom = state; state = 'pause'; return; }
+  stats.frames++;
+  if (frameCount % 6 === 0) SND.sfx('engine');
+
+  if (turbo.dist < 1400) { turbo.subTrack = 1; turbo.speed = 4.2; }
+  else if (turbo.dist < 2700) { turbo.subTrack = 2; turbo.speed = 5.2; }
+  else if (turbo.dist < 4000) { turbo.subTrack = 3; turbo.speed = 6.2; }
+  else if (turbo.dist < 5500) { turbo.subTrack = 4; turbo.speed = 7.4; }
+  else { turbo.subTrack = 5; turbo.speed = 9.0; }
+
+  turbo.dist += turbo.speed;
+  const pBox = { x: 50, y: turbo.pY - 14, w: 28, h: 22 };
+
+  if (jumpPressed() && turbo.onGround) {
+    turbo.pVy = -7.5; turbo.onGround = false; SND.sfx('jump');
+  }
+  turbo.pVy += 0.38; turbo.pY += turbo.pVy;
+  if (turbo.pY >= 142) { turbo.pY = 142; turbo.pVy = 0; turbo.onGround = true; }
+
+  for (const o of turbo.obs) {
+    const rx = o.d - turbo.dist + 50;
+    if (rx < -40) continue;
+    let oBox;
+    if (o.type === 'block') oBox = { x: rx, y: 124, w: 14, h: 26 };
+    else if (o.type === 'high') oBox = { x: rx, y: 92, w: 18, h: 32 };
+    else if (o.type === 'ramp') oBox = { x: rx, y: 136, w: 20, h: 14 };
+
+    if (o.type === 'ramp' && overlap(pBox, oBox) && turbo.onGround) {
+      turbo.pVy = -9.2; turbo.onGround = false; SND.sfx('big');
+      pop(60, turbo.pY - 24, 'ТУРБО-ПРЫЖОК!', '#ffea00');
+    }
+    else if ((o.type === 'block' || o.type === 'high') && overlap(pBox, oBox)) {
+      turbo.crashed = true; shake = 10; SND.sfx('break');
+      burst(60, turbo.pY, ['#ff2222', '#ffaa00', '#ffffff'], 18);
+      lives--;
+      if (lives <= 0) { state = 'gameover'; stT = 0; }
+      else { initTurboTrack(); }
+      return;
+    }
+  }
+
+  if (turbo.subTrack === 5 && turbo.dist > 6700) {
+    if (turbo.bpX === -1) turbo.bpX = W + 30;
+    turbo.bpX -= (turbo.speed - 3.5);
+    const bpBox = { x: turbo.bpX, y: 118, w: 22, h: 30 };
+
+    if (overlap(pBox, bpBox) && !turbo.hitBoss) {
+      turbo.hitBoss = true; shake = 18; SND.sfx('boss'); SND.sfx('break');
+      burst(turbo.bpX + 10, 130, ['#ffd23f', '#ff5050', '#ffffff'], 30);
+      pop(W / 2 - 40, 60, 'ТАРАН БП!', '#ffff00', 8);
+      setTimeout(() => {
+        startLevel(levelIdx + 1);
+      }, 700);
+    }
+  }
+}
+
+function renderTurbo() {
+  const c = Math.round(turbo.dist);
+  g.fillStyle = '#060614'; g.fillRect(0, 0, W, H);
+
+  for (let x = 0; x < W; x += 16) {
+    const ox = (x - (c * 0.8) % 16);
+    g.fillStyle = '#181a30'; g.fillRect(ox, 20, 14, 40);
+    g.fillStyle = '#101222'; g.fillRect(ox, 160, 14, 50);
+  }
+  g.fillStyle = '#222538'; g.fillRect(0, 144, W, 24);
+  g.fillStyle = turbo.subTrack === 5 ? '#ff2255' : '#00e5ff'; g.fillRect(0, 142, W, 2);
+  g.fillStyle = '#111320'; g.fillRect(0, 166, W, 60);
+
+  for (let x = 0; x < W + 32; x += 32) {
+    const rx = x - (c * 1.4) % 32;
+    g.fillStyle = '#fffae0'; g.fillRect(rx, 154, 16, 2);
+  }
+
+  for (const o of turbo.obs) {
+    const rx = Math.round(o.d - turbo.dist + 50);
+    if (rx < -40 || rx > W + 40) continue;
+    if (o.type === 'block') {
+      g.fillStyle = '#d82828'; g.fillRect(rx, 120, 14, 24);
+      g.fillStyle = '#ff7777'; g.fillRect(rx + 2, 122, 10, 2);
+    } else if (o.type === 'high') {
+      g.fillStyle = '#e8a000'; g.fillRect(rx, 90, 18, 30);
+      g.fillStyle = '#fffa66'; g.fillRect(rx + 2, 92, 14, 3);
+      g.fillStyle = '#444'; g.fillRect(rx + 7, 120, 4, 24);
+    } else if (o.type === 'ramp') {
+      g.fillStyle = '#28d844';
+      g.beginPath(); g.moveTo(rx, 144); g.lineTo(rx + 20, 134); g.lineTo(rx + 20, 144); g.fill();
+      g.fillStyle = '#b0ffb8'; g.fillRect(rx + 16, 136, 3, 7);
+    }
+  }
+
+  if (turbo.bpX > -30) {
+    drawBossAt(g, Math.round(turbo.bpX), 116, -1, frameCount, 'charge');
+    txt('БП', turbo.bpX + 4, 102, 6, '#ff4050');
+  }
+
+  const tilt = turbo.onGround ? (Math.sin(frameCount * 0.4) * 0.05) : (turbo.pVy * 0.04);
+  drawChekRider(g, 50, Math.round(turbo.pY - 14), tilt);
+
+  if (frameCount % 2 === 0) {
+    parts.push({ x: 44, y: turbo.pY - 4, vx: -turbo.speed * 0.8, vy: (Math.random() - 0.5) * 1.5, t: 0, life: 15, col: '#ffaa00', s: 3 });
+  }
+  for (const p of parts) { g.fillStyle = p.col; g.fillRect(Math.round(p.x), Math.round(p.y), p.s, p.s); }
 }
 
 // ---------------- ОБНОВЛЕНИЕ ----------------
@@ -1055,6 +1067,7 @@ function updShots() {
   shots = shots.filter(s => !s.gone);
 }
 function updPlay() {
+  if (lvl.def.isTurbo) { updTurbo(); updFx(); return; }
   if (pressed.Escape || pressed.KeyP) { pauseFrom = state; state = 'pause'; return; }
   if (dlg) { updDlg(); updFx(); return; }
   stats.frames++;
@@ -1113,38 +1126,13 @@ function updPlay() {
       case 'pop':
         e.t++; e.y += e.vy; e.vy += 0.25; if (e.t > 28) { e.gone = true; burst(e.x + 3, e.y + 6, ['#e8fbff'], 6); }
         break;
-      case 'turbo_wall':
-        if (lvl.def.turbo && P.x + P.w > e.x && P.x < e.x + e.w) {
-          if (P.y < e.gap_y || P.y + P.h > e.gap_y + e.gap_h) {
-            killPlayer();
-            pop(P.x, P.y, 'РАЗБИЛСЯ!', '#ff5050', 6);
-            shake = 10;
-          }
-        }
-        break;
-      case 'turbo_bp':
-        e.t++;
-        if (lvl.def.turbo && overlap(P, e)) {
-          state = 'clear';
-          stT = 0;
-          SND.play(null);
-          SND.sfx('win');
-          shake = 15;
-          burst(e.x + 40, e.y + 40, ['#ffd23f', '#ff5050', '#7fd83a'], 30, 3);
-          pop(P.x, P.y, 'БП ТАРАНИМ!', '#ffd23f', 8);
-          P.dead = true;
-        }
-        break;
     }
   }
   ents = ents.filter(e => !e.gone);
   if (boss) updBoss();
   updStools(); updShots(); updSquares(); updFx();
-  if (!lvl.def.turbo) {
-    const target = P.x - W / 2 + 5 + P.dir * 24;
-    cam += (target - cam) * 0.1;
-    cam = clamp(cam, 0, lvl.w * T - W);
-  }
+  const target = P.x - W / 2 + 5 + P.dir * 24;
+  cam += (target - cam) * 0.1; cam = clamp(cam, 0, lvl.w * T - W);
 }
 function updClear() {
   if (P.y + P.h < flag.ground - 0.5) { P.y = Math.min(P.y + 2, flag.ground - P.h); P.vx = 0; }
@@ -1158,6 +1146,13 @@ function updClear() {
 
 function update() {
   frameCount++; stT++;
+
+  if (state === 'title') {
+    adminUI.style.display = 'flex';
+  } else {
+    adminUI.style.display = 'none';
+  }
+
   switch (state) {
     case 'title':
       titleCam += 0.6;
@@ -1165,6 +1160,24 @@ function update() {
       for (const d of deco) d.y += d.vy; deco = deco.filter(d => d.y < 200);
       SND.play('title');
       if (okPressed()) { state = 'story'; storyI = 0; storyCh = 0; stT = 0; SND.sfx('blip'); }
+      break;
+    case 'admin_select':
+      if (pressed.ArrowUp) {
+        adminMenuSel = (adminMenuSel - 1 + LEVELS.length) % LEVELS.length;
+        SND.sfx('blip');
+      }
+      if (pressed.ArrowDown) {
+        adminMenuSel = (adminMenuSel + 1) % LEVELS.length;
+        SND.sfx('blip');
+      }
+      if (okPressed()) {
+        SND.sfx('coin');
+        score = 50; lives = 5;
+        startLevel(adminMenuSel);
+      }
+      if (pressed.Escape) {
+        state = 'title';
+      }
       break;
     case 'story':
       storyCh += 0.8;
@@ -1205,13 +1218,6 @@ function update() {
 
 // ---------------- ОТРИСОВКА ----------------
 function drawPlayer(p, c) {
-  if (lvl && lvl.def.turbo) {
-    const x = Math.round(p.x - c);
-    const y = Math.round(p.y);
-    const tilt = p.vy * 0.05;
-    drawChikushka(g, x, y, tilt);
-    return;
-  }
   let spr;
   if (p.dead || !p.onGround) spr = SPR.pj;
   else if (Math.abs(p.vx) > 0.3) spr = [SPR.pw1, SPR.ps, SPR.pw2, SPR.ps][Math.floor(p.anim / 7) % 4];
@@ -1258,16 +1264,6 @@ function drawEnt(e, c) {
       g.fillStyle = '#9af0a0'; g.fillRect(x - 13, fy + 3, 7, 1);
       break;
     }
-    case 'turbo_wall':
-      if (x > -40 && x < W + 40) {
-        drawTurboWall(g, x, e.gap_y, e.gap_h, e.track);
-      }
-      break;
-    case 'turbo_bp':
-      if (x > -100 && x < W + 100) {
-        drawTurboBP(g, x, e.y, e.t);
-      }
-      break;
   }
 }
 function drawHUDLow() {
@@ -1361,13 +1357,18 @@ function renderStoryLow() {
 }
 let labels = [];
 function bubble(x, y, text) {
-  const size = 4.5; sx.font = `${Math.round(size * S)}px ${FONT}`;
-  const w = sx.measureText(text).width / S + 8, h = size + 7;
+  const size = 5; sx.font = `${Math.round(size * S)}px ${FONT}`;
+  const lines = wrap(text, 140, size);
+  let maxW = 0;
+  lines.forEach(l => { const w = sx.measureText(l).width / S; if (w > maxW) maxW = w; });
+  const w = maxW + 8, h = lines.length * 8 + 6;
   const bx = clamp(x - w / 2, 2, W - w - 2), by = Math.max(16, y - h);
   sx.fillStyle = '#000'; sx.fillRect((bx - 1) * S, (by - 1) * S, (w + 2) * S, (h + 2) * S);
   sx.fillStyle = '#fff'; sx.fillRect(bx * S, by * S, w * S, h * S);
   sx.fillRect((x - 2) * S, (by + h) * S, 4 * S, 3 * S);
-  txt(text, bx + 4, by + 4, size, '#111', 'left', null);
+  lines.forEach((l, idx) => {
+    txt(l, bx + 4, by + 4 + idx * 8, size, '#111', 'left', null);
+  });
 }
 function renderDlgHi() {
   const L = dlg.lines[dlg.i], bx = 8, by = H - 68, bw = W - 16, bh = 60;
@@ -1389,7 +1390,7 @@ function render() {
   if (shake) g.translate(Math.round((Math.random() - 0.5) * shake), Math.round((Math.random() - 0.5) * shake));
   if (state === 'title') renderTitleLow();
   else if (state === 'story') renderStoryLow();
-  else if (state === 'intro' || state === 'gameover') {
+  else if (state === 'intro' || state === 'gameover' || state === 'admin_select') {
     g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
     if (state === 'intro') drawSprScaled(g, SPR.ps, W / 2 - 12, 120, 2);
   } else if (state === 'win') {
@@ -1398,7 +1399,10 @@ function render() {
     drawSprScaled(g, [SPR.ps, SPR.pj][(frameCount >> 4) % 2], 150, 160, 2);
     drawBossAt(g, 210, 164, -1, frameCount, 'idle');
     g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(40, 20, W - 80, 118);
-  } else if (lvl) renderWorld();
+  } else if (lvl) {
+    if (lvl.def.isTurbo) renderTurbo();
+    else renderWorld();
+  }
   g.restore();
 
   sx.imageSmoothingEnabled = false;
@@ -1412,7 +1416,18 @@ function render() {
       txt('ТЕХНОЛОГ', W / 2, 60, 12, '#fff', 'center', '#223');
       txt('погоня за квадратными метрами', W / 2, 84, 5.5, '#b8ffb0', 'center');
       if (blink) txt('ЖМИ ПРОБЕЛ', W / 2, 118, 8, '#ffd23f', 'center');
-      txt('← → бег  ПРОБЕЛ прыжок  F табуретка  M музыка  P пауза', W / 2, 212, 4.2, '#fff', 'center');
+      txt('← → бег  ПРОБЕЛ прыжок  F табуретка  M музыка  P пауза', W / 2, 185, 4.2, '#fff', 'center');
+      break;
+    case 'admin_select':
+      txt('АДМИН-ПАНЕЛЬ', W / 2, 20, 10, '#00ffcc', 'center', '#004444');
+      txt('ВЫБОР УРОВНЯ', W / 2, 38, 6, '#fff', 'center');
+      LEVELS.forEach((l, i) => {
+        const isSel = (i === adminMenuSel);
+        const col = isSel ? '#ffd23f' : '#888';
+        const prefix = isSel ? '▶ ' : '  ';
+        txt(`${prefix}${i + 1}. ${l.name}`, 36, 68 + i * 22, 6, col);
+      });
+      txt('↑ ↓ выбор     ПРОБЕЛ старт     ESC отмена', W / 2, 200, 5, '#aaa', 'center');
       break;
     case 'story': {
       const lines = wrap(STORY[storyI].text, W - 50, 6); let left = Math.floor(storyCh);
@@ -1423,12 +1438,18 @@ function render() {
       break;
     }
     case 'intro':
-      txt(lvl.def.boss ? 'БОСС' : `УРОВЕНЬ ${levelIdx + 1}`, W / 2, 40, 8, '#aaa', 'center');
+      txt(lvl.def.boss ? 'БОСС' : (lvl.def.isTurbo ? 'БОНУС-ЭТАП' : `УРОВЕНЬ ${levelIdx + 1}`), W / 2, 40, 8, '#aaa', 'center');
       txt(lvl.def.name, W / 2, 60, 12, lvl.def.boss ? '#ff5060' : '#ffb040', 'center');
       txt(lvl.def.sub, W / 2, 88, 5.5, '#9fe0a0', 'center');
       txt(`м²: ${score}     жизни: ×${lives}`, W / 2, 172, 6, '#fff', 'center');
       break;
     case 'play': case 'dying': case 'clear': case 'pause': {
+      if (lvl && lvl.def.isTurbo) {
+        txt(`×${lives}`, 20, 8, 6, '#fff');
+        txt(`ТРАССА ${turbo.subTrack}/5`, W / 2, 8, 8, '#00e5ff', 'center');
+        if (turbo.subTrack === 5) txt('ТАРАНЬ БП!', W / 2, 22, 7, '#ff3333', 'center');
+        break;
+      }
       const c = Math.round(cam);
       txt(`×${lives}`, 34, 4, 6, '#fff');
       txt(`${score} м²`, 84, 4, 6, '#7f7');
@@ -1438,27 +1459,8 @@ function render() {
       txt(lvl.def.name, W - 4, 4, 5, '#ddd', 'right');
       for (const p of pops) txt(p.text, p.x - c, p.y, p.size, p.col, 'left');
       if (boss && boss.active && boss.st !== 'dead') txt('ДЕНИС «БП» КИЛЬПИКОВ', W / 2, H - 23, 5, '#ffb0b8', 'center');
-      if (boss && boss.sayT > 0) bubble(boss.x - c + 10, boss.y - 8, boss.say);
+      if (boss && boss.sayT > 0) bubble(boss.x - c + 10, boss.y - 12, boss.say);
       if (dlg) renderDlgHi();
-      
-      if (lvl && lvl.def.turbo) {
-        const tracks = [
-          { cam: 0, name: 'ТРАССА 1: РАЗГОН', col: '#7f7' },
-          { cam: 500, name: 'ТРАССА 2: НАБОР', col: '#9fe0ff' },
-          { cam: 1000, name: 'ТРАССА 3: СКОРОСТЬ', col: '#ffb040' },
-          { cam: 1600, name: 'ТРАССА 4: ЭКСТРИМ', col: '#ff9090' },
-          { cam: 2200, name: 'ТРАССА 5: БП ВПЕРЕДИ!', col: '#ff5050' },
-        ];
-        for (const tr of tracks) {
-          if (cam >= tr.cam && cam - tr.cam < 150) {
-            const alpha = 1 - (cam - tr.cam) / 150;
-            sx.globalAlpha = alpha;
-            txt(tr.name, W / 2, H / 2 - 20, 10, tr.col, 'center', '#000');
-            sx.globalAlpha = 1;
-          }
-        }
-      }
-
       if (state === 'clear' && stT > 40) {
         txt(`${lvl.def.name}: ПРОЙДЕНО!`, W / 2, 70, 8, '#ffd23f', 'center');
         txt(`всего квадратов: ${score} м²`, W / 2, 90, 6, '#7f7', 'center');
