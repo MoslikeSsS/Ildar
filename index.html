@@ -261,32 +261,92 @@ function drawBossAt(ctx, x, y, dir, t, st) {
     if (LET_P[r][c]) ctx.fillRect(bx + 4 + c, by + r, 1, 1);
   }
 }
-function drawRaceBP(ctx, x, y, t) {
+function drawChikushka(ctx, x, y, tilt) {
   ctx.save();
-  ctx.translate(x, y);
-  const bob = Math.sin(t * 0.3) * 2;
-  ctx.translate(0, bob);
-  const R = (c, a, b, w, h) => { ctx.fillStyle = c; ctx.fillRect(a, b, w, h); };
-  ctx.globalAlpha = 0.4; R('#000', -2, 34, 28, 3); ctx.globalAlpha = 1;
-  const leg = (t >> 2) % 2;
-  R('#8e8676', 4, 24, 6, 8 - leg); R('#8e8676', 14, 24, 6, 7 + leg);
-  R('#6a1a26', 3, 32 - leg, 8, 2); R('#6a1a26', 13, 31 + leg, 8, 2);
-  R('#1a1a1e', 1, 12, 22, 13);
-  R('#3fbf6a', 4, 20, 11, 1); R('#3fbf6a', 14, 14, 3, 3);
-  R('#eab892', 5, 3, 14, 10);
-  R('#2a2220', 4, 1, 16, 4); R('#2a2220', 4, 3, 4, 4);
-  R('#ff3030', 11, 6, 3, 2); R('#ff3030', 16, 6, 3, 2);
-  R('#fff', 12, 6, 1, 1); R('#fff', 17, 6, 1, 1);
-  R('#8a6a58', 7, 10, 11, 2);
-  R('#2a0a0a', 10, 12, 6, 3);
-  R('#fff', 11, 12, 1, 1); R('#fff', 14, 12, 1, 1);
-  R('#7fd83a', 17, 9, 1, 2 + ((t >> 3) % 2));
+  ctx.translate(x + 13, y + 10);
+  ctx.rotate(tilt);
+  ctx.translate(-13, -10);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(2, 18, 26, 4);
+  ctx.fillStyle = '#2e8a3e';
+  ctx.fillRect(0, 4, 18, 12);
+  ctx.fillRect(14, 6, 8, 8);
+  ctx.fillStyle = '#d8202a';
+  ctx.fillRect(20, 7, 4, 6);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(3, 6, 9, 8);
+  ctx.fillStyle = '#d8202a';
+  ctx.fillRect(4, 7, 7, 2);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(4, 10, 7, 1);
+  ctx.fillStyle = '#7fd83a';
+  ctx.fillRect(2, 5, 2, 10);
+  ctx.fillRect(15, 7, 1, 6);
+  ctx.fillStyle = '#fff';
+  ctx.globalAlpha = 0.6;
+  ctx.fillRect(-8, 8, 6, 1);
+  ctx.fillRect(-12, 12, 10, 1);
+  ctx.fillRect(-6, 14, 4, 1);
+  ctx.globalAlpha = 1;
   ctx.restore();
-  ctx.fillStyle = '#f4f4f4';
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) {
-    if (LET_B[r][c]) ctx.fillRect(x + 4 + c, y + 14 + r, 1, 1);
-    if (LET_P[r][c]) ctx.fillRect(x + 8 + c, y + 14 + r, 1, 1);
+}
+function drawTurboWall(ctx, x, gap_y, gap_h, track) {
+  const colors = ['#4a525c', '#5a626c', '#6a727c', '#7a3030', '#9a2020'];
+  const col = colors[(track - 1) % colors.length];
+  const col_dark = '#2a2a2a';
+  ctx.fillStyle = col;
+  ctx.fillRect(x, 0, 32, gap_y);
+  ctx.fillStyle = col_dark;
+  ctx.fillRect(x, gap_y - 4, 32, 4);
+  ctx.fillStyle = '#888';
+  for (let y = 10; y < gap_y - 10; y += 20) {
+    ctx.fillRect(x + 4, y, 24, 4);
   }
+  ctx.fillStyle = col;
+  ctx.fillRect(x, gap_y + gap_h, 32, H - (gap_y + gap_h));
+  ctx.fillStyle = col_dark;
+  ctx.fillRect(x, gap_y + gap_h, 32, 4);
+  for (let y = gap_y + gap_h + 10; y < H - 10; y += 20) {
+    ctx.fillRect(x + 4, y, 24, 4);
+  }
+  ctx.fillStyle = '#ffd23f';
+  ctx.fillRect(x, gap_y - 2, 32, 2);
+  ctx.fillRect(x, gap_y + gap_h, 32, 2);
+}
+function drawTurboBP(ctx, x, y, t) {
+  const bob = Math.sin(t * 0.1) * 5;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.fillStyle = '#eab892';
+  ctx.fillRect(10, 10, 60, 60);
+  ctx.fillStyle = '#2a2220';
+  ctx.fillRect(5, 5, 70, 15);
+  ctx.fillRect(5, 5, 15, 30);
+  ctx.fillRect(60, 5, 15, 30);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(20, 25, 15, 10);
+  ctx.fillRect(45, 25, 15, 10);
+  ctx.fillStyle = '#ff0000';
+  ctx.fillRect(25, 28, 8, 6);
+  ctx.fillRect(50, 28, 8, 6);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(18, 20, 18, 4);
+  ctx.fillRect(44, 20, 18, 4);
+  ctx.fillStyle = '#d49c78';
+  ctx.fillRect(35, 35, 10, 15);
+  ctx.fillStyle = '#2a0a0a';
+  ctx.fillRect(25, 55, 30, 15);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(28, 55, 6, 5);
+  ctx.fillRect(46, 55, 6, 5);
+  ctx.fillStyle = '#7fd83a';
+  ctx.fillRect(38, 50, 4, 10 + Math.sin(t * 0.2) * 3);
+  ctx.fillStyle = '#1a1a1e';
+  ctx.fillRect(15, 70, 50, 20);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(25, 75, 10, 10);
+  ctx.fillRect(40, 75, 10, 10);
+  ctx.restore();
 }
 const PORT = { il: SPR.ps, bp: (() => { const c = document.createElement('canvas'); c.width = 22; c.height = 33; const x = c.getContext('2d'); drawBossAt(x, 0, 3, 1, 0, 'idle'); return c; })() };
 
@@ -544,25 +604,8 @@ const LEVELS = [
     L.s(139, 11, 'c'); L.r(140, 141, 11, 'L'); L.it([140, 141], 10, 'c');
     L.s(145, 11, 'E');
   } },
-  { name: 'ГОНКА С БП', sub: 'БП догоняет! Уворачивайся от соплей!', theme: 'night', music: 'level2', w: 300, race: true, build(L) {
-    L.gr(0, 299);
+  { name: 'ТУРБО-ТОННЕЛЬ', sub: 'Чикушка-экспресс! 5 трасс до БП!', theme: 'night', music: 'level3', w: 200, turbo: true, build(L) {
     L.s(2, 11, 'P');
-    for (let x = 12; x < 290; x += 8) {
-      const r = Math.random();
-      if (r < 0.15) L.s(x, 11, 'U');
-      else if (r < 0.3) L.it([x, x + 1], 11, '^');
-      else if (r < 0.45) L.r(x, x + 1, 11, 'L');
-      else if (r < 0.55) L.s(x, 11, 'e');
-      else if (r < 0.65) L.s(x, 11, 'c');
-    }
-    for (let x = 60; x < 280; x += 45 + (Math.random() * 20 | 0)) {
-      const gap = 3 + (Math.random() * 3 | 0);
-      for (let gx = 0; gx < gap; gx++) {
-        L.s(x + gx, 12, ' ');
-        L.s(x + gx, 13, ' ');
-      }
-    }
-    L.s(295, 11, 'E');
   } },
   { name: 'ФОНТАН БП', sub: 'Финальная планёрка', theme: 'boss', music: 'boss', w: 24, boss: true, build(L) {
     L.f(0, 0, 0, 13, '='); L.f(23, 0, 23, 13, '='); L.gr(1, 22);
@@ -629,7 +672,6 @@ let stats = { chek: 0, tumba: 0, frames: 0 };
 let P = null, spawn = { x: 0, y: 0 }, flag = null;
 let ents = [], squares = [], pops = [], parts = [], shots = [], stools = [], deco = [];
 let boss = null, dlg = null, storyI = 0, storyCh = 0;
-let raceBP = null;
 
 function newPlayer(x, y) { return { x, y, py: y, w: 10, h: 15, vx: 0, vy: 0, dir: 1, onGround: false, coyote: 0, jbuf: 0, hp: 3, inv: 0, anim: 0, dead: false, big: false, grow: 0, cool: 0 }; }
 function mkBoss(x, y) { return { x, y, sxp: x, syp: y, w: 20, h: 28, vx: 0, vy: 0, dir: -1, hp: 12, maxhp: 12, st: 'idle', t: 0, inv: 0, active: false, say: '', sayT: 0, onGround: false }; }
@@ -653,9 +695,56 @@ function loadLevel(i) {
       case 'B': boss = mkBoss(bx - 2, by - 28); break;
     }
   }
-  P = newPlayer(px, py); spawn = { x: px, y: py }; cam = 0; levelStartScore = score;
+  
+  if (def.turbo) {
+    let x = 200;
+    let track = 1;
+    let gap_h = 90;
+    let interval = 140;
+    
+    while (x < 2800) {
+      if (x > 500 && track === 1) { track = 2; gap_h = 75; interval = 110; }
+      if (x > 1000 && track === 2) { track = 3; gap_h = 60; interval = 90; }
+      if (x > 1600 && track === 3) { track = 4; gap_h = 50; interval = 75; }
+      if (x > 2200 && track === 4) { track = 5; gap_h = 45; interval = 60; }
+      
+      const gap_y = 30 + Math.random() * (H - 60 - gap_h);
+      ents.push({
+        type: 'turbo_wall',
+        x: x,
+        gap_y: gap_y,
+        gap_h: gap_h,
+        track: track,
+        w: 32,
+        h: H
+      });
+      x += interval;
+    }
+    ents.push({
+      type: 'turbo_bp',
+      x: 3000,
+      y: H / 2 - 40,
+      w: 80,
+      h: 80,
+      t: 0
+    });
+    
+    P = newPlayer(px, py);
+    P.w = 26;
+    P.h = 20;
+    P.y = H / 2 - 10;
+    P.vy = 0;
+    P.x = 60;
+    spawn = { x: 60, y: H / 2 - 10 };
+    cam = 0;
+  } else {
+    P = newPlayer(px, py);
+    spawn = { x: px, y: py };
+  }
+  
+  levelStartScore = score;
 }
-function startLevel(i) { levelIdx = i; raceBP = null; loadLevel(i); state = 'intro'; stT = 0; SND.play(null); }
+function startLevel(i) { levelIdx = i; loadLevel(i); state = 'intro'; stT = 0; SND.play(null); }
 function newGame() { score = 0; lives = 3; stats = { chek: 0, tumba: 0, frames: 0 }; startLevel(0); }
 
 // ---------------- ФИЗИКА ----------------
@@ -710,13 +799,44 @@ function hurt() {
 }
 function killPlayer() { if (P.dead) return; P.dead = true; P.vy = -6; P.vx = 0; state = 'dying'; stT = 0; SND.play(null); SND.sfx('die'); }
 function respawn() {
-  raceBP = null;
+  if (lvl && lvl.def.turbo) {
+    loadLevel(levelIdx);
+    state = 'play';
+    stT = 0;
+    SND.play(lvl.def.music);
+    return;
+  }
   P = newPlayer(spawn.x, spawn.y); P.inv = 60; shots = []; stools = [];
   if (boss) { const b = mkBoss(boss.sxp, boss.syp); b.active = true; b.st = 'walk'; boss = b; lvl.grid[8][12] = 'G'; }
   cam = clamp(P.x - W / 2, 0, lvl.w * T - W);
   state = 'play'; stT = 0; SND.play(lvl.def.music);
 }
 function updPlayer() {
+  if (lvl && lvl.def.turbo) {
+    P.x = cam + 60;
+    let accel = 0.6;
+    if (keys.ArrowUp) P.vy -= accel;
+    if (keys.ArrowDown) P.vy += accel;
+    P.vy *= 0.92;
+    P.y += P.vy;
+    if (P.y < 10) { P.y = 10; P.vy = 0; }
+    if (P.y > H - P.h - 10) { P.y = H - P.h - 10; P.vy = 0; }
+    P.dir = 1;
+    P.anim += 2;
+    
+    let speed = 2.5;
+    if (cam > 500) speed = 3.5;
+    if (cam > 1000) speed = 4.5;
+    if (cam > 1600) speed = 5.5;
+    if (cam > 2200) speed = 7.0;
+    
+    cam += speed;
+    cam = Math.min(cam, lvl.w * T - W);
+    
+    if (P.inv > 0) P.inv--;
+    return;
+  }
+
   let ax = 0; if (keys.ArrowLeft) ax -= 1; if (keys.ArrowRight) ax += 1;
   if (ax) { P.vx += ax * (P.onGround ? 0.3 : 0.2); P.dir = ax; }
   else { P.vx *= P.onGround ? 0.72 : 0.95; if (Math.abs(P.vx) < 0.05) P.vx = 0; }
@@ -937,64 +1057,6 @@ function updShots() {
 function updPlay() {
   if (pressed.Escape || pressed.KeyP) { pauseFrom = state; state = 'pause'; return; }
   if (dlg) { updDlg(); updFx(); return; }
-
-  // Режим гонки
-  if (lvl.def.race) {
-    if (!raceBP) {
-      raceBP = { x: P.x - 120, y: 140, vx: 0, t: 0, shots: [], say: '', sayT: 0 };
-    }
-    raceBP.t++;
-    const raceSpeed = 2.2 + Math.min(0.8, raceBP.t / 3000);
-    cam += raceSpeed;
-    cam = Math.min(cam, lvl.w * T - W);
-
-    const targetX = cam - 40;
-    raceBP.x += (targetX - raceBP.x) * 0.05;
-    raceBP.y = 140 + Math.sin(raceBP.t * 0.15) * 6;
-
-    if (raceBP.sayT > 0) raceBP.sayT--;
-    if (raceBP.t % 300 === 180 && raceBP.sayT === 0) {
-      raceBP.say = BP_TAUNT[Math.random() * BP_TAUNT.length | 0];
-      raceBP.sayT = 240;
-    }
-
-    if (raceBP.t % 90 === 0) {
-      raceBP.shots.push({
-        x: raceBP.x + 24, y: raceBP.y + 10,
-        vx: raceSpeed + 3, vy: (Math.random() - 0.3) * 2 - 1,
-        t: 0, w: 10, h: 8
-      });
-      SND.sfx('spit');
-    }
-
-    if (raceBP.t % 140 === 0) {
-      ents.push({
-        type: 'bpboss',
-        x: cam + W + 20,
-        y: -20,
-        w: 18, h: 26,
-        vx: -raceSpeed * 0.5,
-        vy: 1 + Math.random() * 1.5,
-        t: 0
-      });
-    }
-
-    for (const s of raceBP.shots) {
-      s.x += s.vx; s.y += s.vy; s.t++;
-      if (!P.dead && P.inv === 0 && overlap(P, s)) {
-        hurt(); s.gone = true;
-        pop(P.x - 8, P.y - 8, 'ФУУУ, СОПЛИ!', '#7fd83a');
-      }
-      if (s.x > cam + W + 40) s.gone = true;
-    }
-    raceBP.shots = raceBP.shots.filter(s => !s.gone);
-
-    if (P.x + P.w < cam - 10 && !P.dead) {
-      killPlayer();
-      pop(P.x, P.y, 'БП ДОГНАЛ!', '#ff3030', 6);
-    }
-  }
-
   stats.frames++;
   updPlayer();
   for (const e of ents) {
@@ -1051,27 +1113,34 @@ function updPlay() {
       case 'pop':
         e.t++; e.y += e.vy; e.vy += 0.25; if (e.t > 28) { e.gone = true; burst(e.x + 3, e.y + 6, ['#e8fbff'], 6); }
         break;
-      case 'bpboss':
+      case 'turbo_wall':
+        if (lvl.def.turbo && P.x + P.w > e.x && P.x < e.x + e.w) {
+          if (P.y < e.gap_y || P.y + P.h > e.gap_y + e.gap_h) {
+            killPlayer();
+            pop(P.x, P.y, 'РАЗБИЛСЯ!', '#ff5050', 6);
+            shake = 10;
+          }
+        }
+        break;
+      case 'turbo_bp':
         e.t++;
-        e.x += e.vx; e.y += e.vy; e.vy = Math.min(e.vy + 0.1, 4);
-        if (!P.dead && P.inv === 0 && overlap(P, e)) {
-          hurt(); e.gone = true; shake = 6;
-          pop(P.x - 10, P.y - 8, 'БП УДАРИЛ!', '#ff3030', 5);
-          burst(e.x + 9, e.y + 13, ['#ffd23f', '#ff5050'], 8);
+        if (lvl.def.turbo && overlap(P, e)) {
+          state = 'clear';
+          stT = 0;
+          SND.play(null);
+          SND.sfx('win');
+          shake = 15;
+          burst(e.x + 40, e.y + 40, ['#ffd23f', '#ff5050', '#7fd83a'], 30, 3);
+          pop(P.x, P.y, 'БП ТАРАНИМ!', '#ffd23f', 8);
+          P.dead = true;
         }
-        if (e.y > 190) {
-          e.gone = true;
-          burst(e.x + 9, e.y + 13, ['#8e8676', '#2a2220', '#ff3030'], 10, 1.5);
-          shake = 4; SND.sfx('land');
-        }
-        if (e.x < cam - 40) e.gone = true;
         break;
     }
   }
   ents = ents.filter(e => !e.gone);
   if (boss) updBoss();
   updStools(); updShots(); updSquares(); updFx();
-  if (!lvl.def.race) {
+  if (!lvl.def.turbo) {
     const target = P.x - W / 2 + 5 + P.dir * 24;
     cam += (target - cam) * 0.1;
     cam = clamp(cam, 0, lvl.w * T - W);
@@ -1136,6 +1205,13 @@ function update() {
 
 // ---------------- ОТРИСОВКА ----------------
 function drawPlayer(p, c) {
+  if (lvl && lvl.def.turbo) {
+    const x = Math.round(p.x - c);
+    const y = Math.round(p.y);
+    const tilt = p.vy * 0.05;
+    drawChikushka(g, x, y, tilt);
+    return;
+  }
   let spr;
   if (p.dead || !p.onGround) spr = SPR.pj;
   else if (Math.abs(p.vx) > 0.3) spr = [SPR.pw1, SPR.ps, SPR.pw2, SPR.ps][Math.floor(p.anim / 7) % 4];
@@ -1182,6 +1258,16 @@ function drawEnt(e, c) {
       g.fillStyle = '#9af0a0'; g.fillRect(x - 13, fy + 3, 7, 1);
       break;
     }
+    case 'turbo_wall':
+      if (x > -40 && x < W + 40) {
+        drawTurboWall(g, x, e.gap_y, e.gap_h, e.track);
+      }
+      break;
+    case 'turbo_bp':
+      if (x > -100 && x < W + 100) {
+        drawTurboBP(g, x, e.y, e.t);
+      }
+      break;
   }
 }
 function drawHUDLow() {
@@ -1226,32 +1312,6 @@ function renderWorld() {
   }
   for (const s of stools) drawStool(g, Math.round(s.x - c), Math.round(s.y), (s.t >> 2) % 4);
   for (const s of squares) drawSq(g, Math.round(s.x - c), Math.round(s.y));
-
-  // Отрисовка БП в гонке
-  if (lvl.def.race && raceBP) {
-    const bx = Math.round(raceBP.x - c), by = Math.round(raceBP.y);
-    drawRaceBP(g, bx, by, raceBP.t);
-    for (const s of raceBP.shots) {
-      const sx = Math.round(s.x - c), sy = Math.round(s.y);
-      g.fillStyle = '#2e7a1a'; g.fillRect(sx, sy + 1, s.w, s.h - 2);
-      g.fillStyle = '#7fd83a'; g.fillRect(sx + 1, sy, s.w - 2, s.h);
-      g.fillStyle = '#d8ffa0'; g.fillRect(sx + 2, sy + 1, 2, 2);
-    }
-    if (raceBP.sayT > 0) bubble(bx + 10, by - 8, raceBP.say);
-  }
-
-  // Отрисовка "глыб" БП (препятствия сверху)
-  for (const e of ents) if (e.type === 'bpboss') {
-    const ex = Math.round(e.x - c), ey = Math.round(e.y);
-    const R = (col, a, b, w, h) => { g.fillStyle = col; g.fillRect(ex + a, ey + b, w, h); };
-    R('#1a1a1e', 2, 8, 14, 18);
-    R('#eab892', 4, 0, 10, 9);
-    R('#2a2220', 3, -2, 12, 4);
-    R('#ff3030', 6, 3, 2, 2); R('#ff3030', 10, 3, 2, 2);
-    R('#3fbf6a', 4, 14, 8, 2);
-    R('#8e8676', 3, 24, 5, 3); R('#8e8676', 10, 24, 5, 3);
-  }
-
   if (P && !(P.inv > 0 && (P.inv >> 2) % 2 && state === 'play')) drawPlayer(P, c);
   for (const p of parts) { g.fillStyle = p.col; g.fillRect(Math.round(p.x - c), Math.round(p.y), p.s, p.s); }
   drawHUDLow();
@@ -1380,6 +1440,25 @@ function render() {
       if (boss && boss.active && boss.st !== 'dead') txt('ДЕНИС «БП» КИЛЬПИКОВ', W / 2, H - 23, 5, '#ffb0b8', 'center');
       if (boss && boss.sayT > 0) bubble(boss.x - c + 10, boss.y - 8, boss.say);
       if (dlg) renderDlgHi();
+      
+      if (lvl && lvl.def.turbo) {
+        const tracks = [
+          { cam: 0, name: 'ТРАССА 1: РАЗГОН', col: '#7f7' },
+          { cam: 500, name: 'ТРАССА 2: НАБОР', col: '#9fe0ff' },
+          { cam: 1000, name: 'ТРАССА 3: СКОРОСТЬ', col: '#ffb040' },
+          { cam: 1600, name: 'ТРАССА 4: ЭКСТРИМ', col: '#ff9090' },
+          { cam: 2200, name: 'ТРАССА 5: БП ВПЕРЕДИ!', col: '#ff5050' },
+        ];
+        for (const tr of tracks) {
+          if (cam >= tr.cam && cam - tr.cam < 150) {
+            const alpha = 1 - (cam - tr.cam) / 150;
+            sx.globalAlpha = alpha;
+            txt(tr.name, W / 2, H / 2 - 20, 10, tr.col, 'center', '#000');
+            sx.globalAlpha = 1;
+          }
+        }
+      }
+
       if (state === 'clear' && stT > 40) {
         txt(`${lvl.def.name}: ПРОЙДЕНО!`, W / 2, 70, 8, '#ffd23f', 'center');
         txt(`всего квадратов: ${score} м²`, W / 2, 90, 6, '#7f7', 'center');
